@@ -1,0 +1,20 @@
+node_modules/
+.next/
+out/
+.vercel
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+.env*
+
+# Editor/tool leftovers
+*.josm-backup
+.claude/settings.local.json
+
+# Personal travel documents — not part of the project, and a name and booking
+# reference have no business in a repo that might later gain a remote.
+E-billet*.pdf
+
+# claude-flow tooling state
+.claude-flow/

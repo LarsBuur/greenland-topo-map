@@ -1,0 +1,1781 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1a1d21;
+  --muted: #5c6670;
+  --line: #dfe3e8;
+  --accent: #1971c2;
+  --warn-bg: #fff4e6;
+  --warn-fg: #8a4b08;
+  --warn-line: #ffc888;
+  --panel: rgba(255, 255, 255, 0.94);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171a;
+    --fg: #e8eaed;
+    --muted: #9aa4ae;
+    --line: #2c3238;
+    --accent: #74b3f0;
+    --warn-bg: #3b2a12;
+    --warn-fg: #ffd8a8;
+    --warn-line: #6b4a1c;
+    --panel: rgba(23, 26, 30, 0.94);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* Any author `display` beats the UA stylesheet's [hidden] rule, which silently
+   reveals things meant to be hidden — the file inputs behind "Add photo" and
+   "Import", and the panel rail during point placement all hit this. */
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Map ---------- */
+
+.act-map-root,
+.act-loading {
+  position: fixed;
+  inset: 0;
+}
+
+.act-loading {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.act-map {
+  position: absolute;
+  inset: 0;
+  background: #eef1f4;
+  /* Without this, a long press on the map raises iOS's own "Copy / Look Up /
+     Translate" callout over the top, and the hold-to-drop-a-point gesture
+     appears to do nothing at all. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Popups still hold text worth selecting — coordinates, hut notes. */
+.act-map .leaflet-popup-content {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.act-pin-wrap {
+  background: none;
+  border: none;
+}
+
+.act-pin {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+
+/* Insets: launched from the Home Screen the page draws edge to edge, under the
+   status bar and the gesture indicator. */
+.act-hud {
+  position: absolute;
+  left: calc(10px + env(safe-area-inset-left));
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.act-hud-coord {
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.act-hud-zoom {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.act-btn,
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.act-btn:hover,
+.btn:hover {
+  border-color: var(--accent);
+}
+
+/* ---------- Itinerary panel (last in the left rail) ---------- */
+
+.plan {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  backdrop-filter: blur(3px);
+}
+
+.plan-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 11px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-closed .plan-head {
+  border-bottom: none;
+}
+
+.plan:not(.plan-closed) .plan-head {
+  border-bottom: 1px solid var(--line);
+}
+
+.plan-head-text {
+  display: block;
+  min-width: 0;
+}
+
+.plan-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.plan-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.plan-chevron {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.plan-body {
+  padding: 2px 11px 11px;
+}
+
+.plan-day {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.plan-day:last-of-type {
+  border-bottom: none;
+}
+
+.plan-day-head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.plan-date {
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.plan-tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-line);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.plan-km {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.plan-route {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.plan-stop {
+  color: var(--accent);
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-underline-offset: 2px;
+}
+
+.plan-arrow {
+  color: var(--muted);
+}
+
+.plan-via {
+  color: var(--muted);
+}
+
+/* Current day, only while the trip is running. */
+.plan-day-today {
+  margin: 0 -11px;
+  padding: 9px 11px;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-left: 3px solid var(--accent);
+}
+
+.plan-tag-today {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.plan-fish,
+.plan-note {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.plan-label {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--line);
+  color: var(--fg);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: 1px;
+}
+
+.plan-note strong,
+.plan-fish strong {
+  color: var(--fg);
+}
+
+.plan-total {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 2px solid var(--line);
+  font-size: 12.5px;
+}
+
+.plan-total strong {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-foot {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.plan-foot-links {
+  margin-top: 7px;
+}
+
+
+/* ---------- Offline downloads (left side) ---------- */
+
+/* All three panels stack in one column, so none has to know the others'
+   heights and the HUD along the bottom stays clear.
+
+   The rail is the single scroll container: three panels each with their own
+   inner scroller means a drag can land in the wrong one, which on a touch
+   screen is worse than one long list. */
+.act-rail {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  left: calc(10px + env(safe-area-inset-left));
+  z-index: 900; /* same band as Leaflet's controls sit above */
+  width: min(330px, calc(100vw - 20px));
+  max-height: calc(100% - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* The rail must not swallow map drags in the gaps between panels. */
+  pointer-events: none;
+  scrollbar-width: thin;
+}
+
+.act-rail > * {
+  pointer-events: auto;
+  width: 100%;
+}
+
+
+
+/* Hiding is the point of the toggle: on a phone the collapsed headers alone
+   still cover a third of the map. */
+.act-rail-hidden {
+  overflow: visible;
+}
+
+.act-rail-toggle {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: auto;
+  /* Sticky, because the rail scrolls: with the itinerary open on a phone, a
+     toggle that scrolled away would leave no way back to the bare map. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(3px);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.act-rail-toggle:hover {
+  border-color: var(--accent);
+}
+
+.act-rail-count {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+}
+
+.offline {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  backdrop-filter: blur(3px);
+}
+
+.offline-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 11px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.offline:not(.offline-closed) .offline-head {
+  border-bottom: 1px solid var(--line);
+}
+
+.offline-head-text {
+  display: block;
+  min-width: 0;
+}
+
+.offline-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.offline-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #c92a2a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.offline-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.offline-chevron {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.offline-body {
+  padding: 11px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: 13px;
+}
+
+.offline-field {
+  margin: 0 0 12px;
+  padding: 0;
+  border: none;
+}
+
+.offline-field legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.offline-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.offline-check input {
+  margin-top: 2px;
+  flex: none;
+  /* Comfortable to hit with a thumb without redrawing the control. */
+  width: 17px;
+  height: 17px;
+}
+
+.offline-check strong {
+  display: block;
+  font-weight: 600;
+}
+
+.offline-hint {
+  display: block;
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  font-style: normal;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.offline-choices {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.offline-chip {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.offline-chip-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.offline-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.offline-estimate {
+  margin: 0 0 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(127, 127, 127, 0.08);
+  font-variant-numeric: tabular-nums;
+}
+
+.offline-progress {
+  margin-bottom: 10px;
+}
+
+.offline-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.offline-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s linear;
+}
+
+.offline-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.act-btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.act-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.offline-note,
+.offline-warn {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-line);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.offline-warn {
+  margin: 0 0 10px;
+}
+
+.offline-storage {
+  margin-top: 10px;
+}
+
+/* ---------- Point form (modal) ---------- */
+
+.pd {
+  padding: 0;
+  border: none;
+  background: none;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  /* The dialog element itself is the backdrop target, so it has to fill the
+     viewport rather than shrink-wrap the card. */
+  overflow: hidden;
+}
+
+.pd::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.pd[open] {
+  display: grid;
+  place-items: center;
+}
+
+.pd-card {
+  width: min(420px, calc(100vw - 24px));
+  /* dvh, not vh: on iOS the URL bar and the keyboard change the real viewport,
+     and vh would let the card run off the bottom of the screen. */
+  max-height: min(88dvh, 720px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pd-head {
+  margin-bottom: 14px;
+}
+
+.pd-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.pd-coord {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-label {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pd-optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.pd-label input,
+.pd-label textarea {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  /* 16px, or iOS zooms the whole page in when the field takes focus. */
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  resize: vertical;
+}
+
+.pd-label input:focus,
+.pd-label textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.pd-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
+.pd-photo-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.pd-photo {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.pd-photo-empty {
+  border-style: dashed;
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.pd-photo-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.pd-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.pd-actions-start {
+  justify-content: flex-start;
+  padding-top: 0;
+  margin-top: -6px;
+  margin-bottom: 12px;
+}
+
+/* The decoded position, echoed back. Reading `V` as east would be a hundred
+   degrees of wrong, so it is stated in full rather than left implicit. */
+.cd-ok,
+.cd-bad {
+  margin: 0 0 14px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cd-ok {
+  border: 1px solid var(--line);
+  background: rgba(127, 127, 127, 0.09);
+  font-variant-numeric: tabular-nums;
+}
+
+.cd-bad {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-line);
+}
+
+/* Thumb-sized targets: this is the one form used with cold hands. */
+.pd-actions .act-btn {
+  padding: 11px 18px;
+  font-size: 15px;
+}
+
+@media (max-width: 520px) {
+  .pd-actions {
+    flex-direction: row-reverse;
+  }
+
+  .pd-actions .act-btn {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* ---------- Placing a point ---------- */
+
+.act-placing {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1002;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: max-content;
+  max-width: calc(100vw - 20px);
+  padding: 9px 10px 9px 14px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(3px);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---------- Personal points ---------- */
+
+.mine {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  backdrop-filter: blur(3px);
+}
+
+.mine-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 11px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mine:not(.mine-closed) .mine-head {
+  border-bottom: 1px solid var(--line);
+}
+
+.mine-head-text {
+  display: block;
+  min-width: 0;
+}
+
+.mine-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Not decoration: the point of the badge is that "private" is visible without
+   opening the panel. */
+.mine-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #f0a500;
+  color: #3b2a00;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mine-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mine-chevron {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.mine-body {
+  padding: 11px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: 13px;
+}
+
+.mine-privacy {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-left: 3px solid #f0a500;
+  background: rgba(240, 165, 0, 0.09);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mine-warn {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-line);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mine-note {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(127, 127, 127, 0.09);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mine-hint {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.mine-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mine-form-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.mine-coord {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mine-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mine-optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.mine-label input,
+.mine-label textarea {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  /* 16px keeps iPadOS from zooming the viewport when the field takes focus. */
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  resize: vertical;
+}
+
+.mine-label input:focus,
+.mine-label textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.mine-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.mine-item {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.mine-item:last-child {
+  border-bottom: none;
+}
+
+.mine-item-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mine-item-main {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+
+.mine-item-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.mine-thumb {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.mine-thumb-loading {
+  display: block;
+}
+
+.mine-photo-row {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.mine-photo-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.mine-photo-empty {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 5px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 20px;
+}
+
+.mine-photo-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* The popup photo is the point of the feature — give it the full width. */
+.act-mine-photo {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin: 6px 0 2px;
+}
+
+.mine-item-name {
+  display: block;
+  font-weight: 600;
+}
+
+.mine-item-coord {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mine-item-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  /* Long notes stay in the list without pushing everything else off screen. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mine-item-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: none;
+}
+
+.mine-item-tools button {
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.mine-item-tools button:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.act-mine-wrap {
+  background: none;
+  border: none;
+}
+
+.act-mine {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+/*
+ * An expanded panel scrolls within itself.
+ *
+ * Without a bound, opening the itinerary pushes every panel below it far down
+ * the rail, and getting from "Offline maps" to "My points" means scrolling past
+ * nine days of plan. Capping each body keeps every panel header reachable.
+ *
+ * Overscroll is deliberately left to chain: running out of panel then carries
+ * on scrolling the rail, which is what a thumb expects. `contain` would strand
+ * you inside a panel with no way out except finding a header to drag.
+ */
+.offline-body,
+.mine-body,
+.trk-body,
+.plan-body {
+  max-height: 46dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 700px) {
+  /* Leave more map visible on a phone; the rail scrolls for the rest. */
+  .act-rail {
+    max-height: calc(100% - 130px);
+  }
+}
+
+.act-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  width: min(560px, calc(100vw - 20px));
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-line);
+  font-size: 13px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.act-banner button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.act-banner-detail {
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+.act-banner-live {
+  top: auto;
+  bottom: 70px;
+}
+
+.act-banner-sos {
+  background: #c92a2a;
+  color: #fff;
+  border-color: #a51111;
+}
+
+/* ---------- Tracked days ---------- */
+
+.trk {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  backdrop-filter: blur(3px);
+}
+
+.trk-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 11px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trk:not(.trk-closed) .trk-head {
+  border-bottom: 1px solid var(--line);
+}
+
+.trk-head-text {
+  display: block;
+  min-width: 0;
+}
+
+.trk-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.trk-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.trk-chevron {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.trk-body {
+  padding: 11px;
+  font-size: 13px;
+}
+
+.trk-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.trk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trk-day {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.trk-day input {
+  flex: none;
+  width: 17px;
+  height: 17px;
+}
+
+.trk-swatch {
+  flex: none;
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: #e8590c;
+}
+
+.trk-day-text {
+  min-width: 0;
+}
+
+.trk-day-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.trk-latest {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e8590c;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.trk-day-meta {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.trk-hint {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ---------- Your own position ---------- */
+
+.act-locate {
+  position: absolute;
+  right: calc(10px + env(safe-area-inset-right));
+  bottom: calc(38px + env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.act-locate-btn {
+  display: grid;
+  place-items: center;
+  /* 48px: a thumb target, and usable with gloves on. */
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(3px);
+}
+
+.act-locate-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.act-locate-busy {
+  color: var(--accent);
+  animation: act-searching 1.1s ease-in-out infinite;
+}
+
+@keyframes act-searching {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.act-follow {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(3px);
+}
+
+.act-follow-on {
+  background: #1c7ed6;
+  border-color: #1c7ed6;
+  color: #fff;
+}
+
+.act-locate-acc {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.act-me-wrap {
+  background: none;
+  border: none;
+}
+
+.act-me {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 2px;
+  border-radius: 50%;
+  background: #1c7ed6;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.act-banner-geo {
+  top: auto;
+  bottom: 70px;
+}
+
+/* A coarse fix is a network position, not satellites — say so rather than let
+   a 2 km circle read as "your location". */
+.act-locate-coarse {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border-color: var(--warn-line);
+}
+
+.act-banner-update {
+  align-items: center;
+  background: var(--panel);
+  color: var(--fg);
+  border-color: var(--line);
+}
+
+/* ---------- Live inReach position ---------- */
+
+.act-live-wrap {
+  background: none;
+  border: none;
+}
+
+.act-live,
+.act-live-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e8590c;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.act-live {
+  margin: 2px;
+  animation: act-pulse 2.4s ease-out infinite;
+}
+
+.act-live-emergency {
+  background: #c92a2a;
+  animation-duration: 1s;
+}
+
+@keyframes act-pulse {
+  0% {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(232, 89, 12, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 16px rgba(232, 89, 12, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(232, 89, 12, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .act-live {
+    animation: none;
+  }
+}
+
+.act-btn-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.act-live-dot {
+  width: 9px;
+  height: 9px;
+  border-width: 0;
+  box-shadow: none;
+  flex: none;
+}
+
+.leaflet-popup-content .act-meta {
+  color: #5c6670;
+  font-size: 12px;
+}
+
+.leaflet-popup-content .act-warn {
+  color: #8a4b08;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Trail stages and distance marks ---------- */
+
+.leaflet-popup-content .act-stage-desc {
+  display: block;
+  margin: 6px 0 4px;
+  color: #1a1d21;
+}
+
+.act-sar-wrap {
+  background: none;
+  border: none;
+}
+
+.act-sar {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* Permanent every-10-km labels: a bare number, no tooltip chrome. Qualified with
+   .leaflet-tooltip to outrank leaflet.css, which loads after this file. */
+.leaflet-tooltip.act-km-label {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-left: 2px;
+  color: #212529;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 0 3px #fff,
+    0 0 3px #fff,
+    0 0 3px #fff;
+}
+
+.leaflet-tooltip.act-km-label::before {
+  display: none;
+}
+
+/* ---------- Links page ---------- */
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+.page-head h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+.lede {
+  color: var(--muted);
+  margin: 0 0 16px;
+  max-width: 60ch;
+}
+
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page h2 {
+  margin: 40px 0 12px;
+  font-size: 18px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: 1px;
+}
+
+.kind {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-left: 16px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+td.num,
+th.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.desc {
+  color: var(--muted);
+  min-width: 22ch;
+}
+
+.coord {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.approx,
+.approx-tag {
+  color: var(--warn-fg);
+  font-size: 11px;
+  margin-left: 5px;
+}
+
+.days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.days > li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.day-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.day-date {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.day-km {
+  color: var(--muted);
+  font-size: 13px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.day-note {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.chip:hover {
+  border-color: var(--accent);
+}
+
+.warn {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.page-foot {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+}
