@@ -1,4 +1,4 @@
-# ACT map — hotlinkable Greenland topo map
+# Greenland topo map — offline maps for the Arctic Circle Trail
 
 A Next.js app that shows the Greenland 1:50,000 topographic basemap centred on coordinates
 given in the URL, with a pin. Shareable links work on desktop and mobile — no JOSM, no
@@ -6,6 +6,10 @@ localhost, no desktop dependency.
 
 Built to replace the `http://127.0.0.1:8111/zoom?...` JOSM Remote Control links in
 `ACT-Personal-Itinerary.md`, which only work with JOSM running on the same machine.
+
+A running instance lives at **[act.buur.org](https://act.buur.org)**. It carries one particular
+hiker's route and plan, so if you want it for your own trip, deploy your own — see
+[Deploy your own](#deploy-your-own). Every key it needs is free.
 
 ## URL format
 
@@ -28,6 +32,67 @@ Built to replace the `http://127.0.0.1:8111/zoom?...` JOSM Remote Control links 
 | `/api/wms-health` | Reports whether the topo basemap is usable, so the client can show a real message instead of a blank map. |
 | `/api/inreach` | Live position and recent track from the Garmin inReach (see below). |
 | `/api/version` | The deployment's build id, so a long-running installed app can notice it is stale (see [Keeping it current](#keeping-it-current)). |
+
+## Deploy your own
+
+The instance at act.buur.org holds one person's route, plan and Garmin feed. Nothing stops you
+running your own; it needs one free token, and the rest is optional.
+
+### 1. Get a Dataforsyningen token
+
+The Greenland basemap is `gl_aabent_land`, served by Klimadatastyrelsen through
+[dataforsyningen.dk](https://dataforsyningen.dk). Register (free), then **Min side → tokens**.
+Without it the app still runs and falls back to OpenStreetMap, with a banner saying why.
+
+### 2. Deploy
+
+```bash
+git clone https://github.com/<you>/greenland-topo-map
+cd greenland-topo-map
+npm install
+echo 'DATAFORSYNINGEN_TOKEN=<your token>' > .env.local
+npm run dev
+```
+
+For Vercel, `vercel env add DATAFORSYNINGEN_TOKEN production` and deploy. Nothing else is
+required — no database, no account system, no build-time secrets.
+
+### 3. Optional: your own inReach
+
+```bash
+GARMIN_MAPSHARE_ID=XXXXX        # last path segment of your MapShare URL
+GARMIN_MAPSHARE_PASSWORD=…      # only if your MapShare page is password-protected
+```
+
+Omit both and the live-tracking layer simply does not appear. **Read the warning in
+[Live tracking](#live-tracking) before you set these on a public deployment** — `/api/inreach` is
+unauthenticated, so anyone who can reach your deployment can read your position.
+
+### 4. Make it your route
+
+What is specific to the Arctic Circle Trail, and what to change:
+
+| File | Holds | If you are doing a different route |
+| --- | --- | --- |
+| `lib/itinerary.ts` | The day-by-day plan in the Itinerary panel | Replace with yours, or empty `PLAN_DAYS` to drop the panel |
+| `lib/waypoints.ts` | Huts, towns, trailheads, river crossings; `DEFAULT_VIEW` | Replace. `DEFAULT_VIEW` is where the map opens with no hash |
+| `lib/trail-stages.ts` | Stage prose, SAR points, the no-paddle area | Replace or empty |
+| `public/act-north-trail.geojson` | The route geometry and distance marks | Replace; `scripts/build-trail.mjs` shows how this one was extracted |
+| `scripts/build-icons.py` | Draws the app icon **from the route geometry** | Re-run `npm run icons` and your icon becomes your route |
+
+The basemap itself is Greenland-only. Elsewhere the topo layer will be blank and you would want a
+different WMS in `components/MapView.tsx` — the offline download, personal points, photos and
+export machinery are not Greenland-specific and would carry over.
+
+The offline download assumes a corridor along a route. With no route loaded you can still cover
+your own saved points, but the corridor option will have nothing to follow.
+
+### A note on the numbers
+
+Two figures in this README were measured against the live service rather than assumed, and are
+worth re-measuring if you point this at a different source: the topo raster resolution behind
+[Why z14 is the ceiling](#why-z14-is-the-ceiling) (`npm run measure-topo`), and the mean tile
+weights used for download size estimates in `components/MapView.tsx`.
 
 ## Layout
 
@@ -92,7 +157,7 @@ Positions come from Garmin's MapShare KML feed (`share.garmin.com/Feed/Share/<id
 server-side so the MapShare password never reaches the browser:
 
 ```bash
-GARMIN_MAPSHARE_ID=XB2YE          # last path segment of the share URL
+GARMIN_MAPSHARE_ID=XXXXX          # last path segment of your MapShare URL
 GARMIN_MAPSHARE_PASSWORD=…        # omit if the MapShare page isn't password-protected
 ```
 
@@ -131,8 +196,10 @@ faster. This is a convenience readout only — Garmin IERCC runs the actual emer
 
 ## Plan panel
 
-The **Itinerary** panel, last in the left rail, is Lars's personal day-by-day plan, held in
-`lib/itinerary.ts` and rendered by `components/PlanPanel.tsx`.
+The **Itinerary** panel, last in the left rail, is one hiker's day-by-day plan, held in
+`lib/itinerary.ts` and rendered by `components/PlanPanel.tsx`. It ships as a worked example —
+**replace it with your own** (see [Deploy your own](#deploy-your-own)), or empty `PLAN_DAYS` and
+the panel disappears.
 
 Each day's `route` is a list of `RouteStop`s rather than one string, so every place can link to
 its own position on the map. A stop's `id` refers to a waypoint in `lib/waypoints.ts` and the href
