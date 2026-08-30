@@ -585,6 +585,23 @@ it exists to detect.
 **To force it:** swipe up in the app switcher to quit the installed app, then reopen. After that
 the banner handles it.
 
+## Licence
+
+The **code** is MIT — see `LICENSE`. Fork it, deploy it, change it.
+
+The **data and imagery are not the author's to relicense**, and MIT does not reach them:
+
+| | |
+| --- | --- |
+| `public/act-north-trail.geojson`, `public/ACT-North-Trail.gpx` | Route geometry, stage prose, SAR points and the no-paddle area, derived from the [arcticcircletrail.gl interactive map](https://arcticcircletrail.gl/planning/act-interactive-map/). Included here so the app works out of the box and so the extraction can be checked, with credit to its authors. **Their terms govern any reuse** — if you intend to redistribute it yourself, ask them. `scripts/build-trail.mjs` regenerates it from source. |
+| Topographic tiles | © Klimadatastyrelsen, attribution mandatory (see below). Fetched live; nothing is redistributed here. |
+| Aerial tiles | EOxCloudless, CC BY-NC-SA 4.0 — **non-commercial only**. |
+| `vendor/leaflet-linear-measurement/` | © 2017 New Light Technologies, Inc, 2-clause BSD. Its own `LICENSE` applies. |
+| `lib/itinerary.ts`, `ACT-Personal-Itinerary.md` | One hiker's plan, kept as a worked example. Replace it with your own rather than reusing it. |
+
+Tiles you download for offline use are cached on your own device under the terms of whichever
+service served them; see [A note on the tile servers](#a-note-on-the-tile-servers).
+
 ## Attribution
 
 Topographic map © Klimadatastyrelsen (Dataforsyningen), layer `gl_aabent_land` — attribution is
