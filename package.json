@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "icons": "python3 scripts/build-icons.py",
     "measure-topo": "python3 scripts/measure-native-resolution.py"

@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push supersedes the first; no point finishing the older run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Matches the Node major Vercel builds this project with, so a version
+      # difference cannot make CI green and the deploy red.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # No secrets are needed. Every read of DATAFORSYNINGEN_TOKEN and the
+      # Garmin variables happens inside a request handler, and the two
+      # build-time reads (the build id, and the same id echoed into the client
+      # bundle) both fall back. A missing token yields a 503 from /api/wms at
+      # runtime, not a broken build.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'

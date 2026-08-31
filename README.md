@@ -1,5 +1,7 @@
 # Greenland topo map — offline maps for the Arctic Circle Trail
 
+[![CI](https://github.com/LarsBuur/greenland-topo-map/actions/workflows/ci.yml/badge.svg)](https://github.com/LarsBuur/greenland-topo-map/actions/workflows/ci.yml)
+
 A Next.js app that shows the Greenland 1:50,000 topographic basemap centred on coordinates
 given in the URL, with a pin. Shareable links work on desktop and mobile — no JOSM, no
 localhost, no desktop dependency.
@@ -652,6 +654,15 @@ npm run typecheck  # tsc --noEmit
 npm run icons      # regenerate the PWA icon set from the trail geometry
 npm run measure-topo   # re-measure the topo's native resolution (see "Why z14 is the ceiling")
 ```
+
+`.github/workflows/ci.yml` runs the typecheck and the build on every push and pull request, on
+the same Node major that Vercel builds with, so a version difference cannot make CI green and the
+deploy red. It needs **no secrets**: every read of `DATAFORSYNINGEN_TOKEN` and the Garmin
+variables happens inside a request handler, and the two build-time reads both fall back.
+
+There is no `lint` script. `next lint` is deprecated in Next 15 and prompts interactively for an
+ESLint configuration, which in CI would simply hang until the job timed out. Setting up the ESLint
+CLI properly is a job on its own.
 
 `scripts/build-icons.py` draws the icon from `public/act-north-trail.geojson`, so the Home Screen
 icon is the actual shape of the route. It rotates the route onto the diagonal — laid out
